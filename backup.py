@@ -122,17 +122,18 @@ for page in range(1, pages+1):
     r = s.get(url + model + '.json', params={'page': page, 'status': 'any', **params})
     objs = [i for i in r.json().get(model)]
     for i in objs:
-        customer = db.query(Customer).get(i['customer']['id'])
-        if customer is None:
-            continue
-        fields = {k: i.get(k) for k in field_values}
-        obj = db.query(Model).filter_by(id=i['id'])
-        if obj.first() is not None:
-            obj.update(fields)
-        else:
-            obj = Model(id=i['id'], customer_id=customer.id, **fields)
-            customer.orders.append(obj)
-            db.add(obj)
+        if 'customer' in i:
+            customer = db.query(Customer).get(i['customer']['id'])
+            if customer is None:
+                continue
+            fields = {k: i.get(k) for k in field_values}
+            obj = db.query(Model).filter_by(id=i['id'])
+            if obj.first() is not None:
+                obj.update(fields)
+            else:
+                obj = Model(id=i['id'], customer_id=customer.id, **fields)
+                customer.orders.append(obj)
+                db.add(obj)
         num += 1
 print("Imported {} {}.".format(num, model))
 
